@@ -1,0 +1,46 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    name: test + userspace measurement
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - name: kernel / bpf flag
+        run: |
+          uname -a
+          echo -n "unprivileged_bpf_disabled="
+          cat /proc/sys/kernel/unprivileged_bpf_disabled 2>/dev/null || echo unavailable
+      - name: test
+        run: cargo test --locked -- --test-threads=1
+      - name: locate canary (fail loud if jne encoding missing)
+        run: cargo run --locked --quiet -- locate
+      - name: measurement n=100 (thresholds from lab/prereg.json)
+        run: |
+          cargo run --locked --release --quiet -- measure --n 100 --out results/ci.json
+          python3 - <<'PY'
+          import json, sys
+          r = json.load(open("results/ci.json"))
+          print(json.dumps(r["thresholds"], indent=2))
+          if not r["met"]:
+              print("criterio no cumplido", file=sys.stderr)
+              sys.exit(1)
+          # Hard asserts matching prereg
+          t = r["thresholds"]
+          assert t["tpr_int3"] >= 1.0
+          assert t["tpr_branch_only"] >= 1.0
+          assert t["fpr_clean"] <= 0.0
+          print("OK: thresholds met")
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lab-results
+          path: results/ci.json

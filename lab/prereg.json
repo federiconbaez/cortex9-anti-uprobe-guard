@@ -1,0 +1,58 @@
+{
+  "idea_id": 58,
+  "slug": "anti-uprobe-guard",
+  "preregistered_at_art": "2026-10-29 15:20 ART",
+  "note": "Corpus and thresholds fixed BEFORE the official measurement. Any change to this file after the first push that contains it invalidates the run and requires a new prereg commit.",
+  "platform": "x86_64 Linux; userspace simulation of uprobe breakpoints (box has unprivileged_bpf_disabled=2)",
+  "detector": "byte-for-byte compare of PT_LOAD RX mapping of the running binary against the corresponding bytes of /proc/self/exe (ELF file). Any mismatch is a detection.",
+  "canary": {
+    "symbol": "cx9_canary_branch",
+    "int3_plant": "mprotect page RWX; write 0xCC over the first byte of the canary; scan; restore",
+    "branch_only_plant": "mprotect page RWX; flip the canary je/jne (0x74\u21940x75), no int3; scan; restore"
+  },
+  "trials": {
+    "n": 100,
+    "arms": [
+      {
+        "name": "clean",
+        "tamper": "none",
+        "expect": "ok"
+      },
+      {
+        "name": "int3",
+        "tamper": "planted_0xCC",
+        "expect": "detected"
+      },
+      {
+        "name": "branch_only",
+        "tamper": "jne_to_je",
+        "expect": "detected"
+      }
+    ]
+  },
+  "thresholds": {
+    "tpr_int3": {
+      "min": 1.0,
+      "n": 100,
+      "formula": "detections/100"
+    },
+    "tpr_branch_only": {
+      "min": 1.0,
+      "n": 100,
+      "formula": "detections/100"
+    },
+    "fpr_clean": {
+      "max": 0.0,
+      "n": 100,
+      "formula": "false_alarms/100"
+    }
+  },
+  "by_construction_caveat": "100% TPR and 0% FPR are on a corpus written by the same author as the detector: three synthetic arms (clean / int3 / branch flip) against the detector's own canary. Not a blind evaluation against real eBPF uprobes.",
+  "out_of_scope_until_measured": [
+    "real kernel uprobe attach (optional enforce job; must fail loudly if unavailable)",
+    "shared-library .text (libc, etc.)",
+    "Quarkslab VMA-writable escape (valid_vma rejects VM_WRITE)",
+    "uretprobe / [uprobes] xol mapping detection",
+    "non-x86_64"
+  ]
+}

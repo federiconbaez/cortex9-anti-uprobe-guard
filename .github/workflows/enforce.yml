@@ -1,0 +1,29 @@
+name: enforce
+
+# Real kernel uprobe. Separated from ci.yml on purpose: no continue-on-error,
+# no #[ignore]. If the runner cannot register a uprobe (permissions, bpf
+# lockdown, missing CONFIG_UPROBE_EVENTS), this job goes red and stays red.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  enforce:
+    name: enforce (real uprobe, sudo)
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
+      - name: kernel
+        run: |
+          uname -a
+          echo -n "unprivileged_bpf_disabled="
+          cat /proc/sys/kernel/unprivileged_bpf_disabled 2>/dev/null || echo unavailable
+          ls -la /sys/kernel/tracing/uprobe_events /sys/kernel/debug/tracing/uprobe_events 2>&1 || true
+      - name: build
+        run: cargo build --locked --release --bin anti-uprobe-enforce
+      - name: enforce (fails loudly if uprobe cannot attach)
+        run: sudo -E ./target/release/anti-uprobe-enforce

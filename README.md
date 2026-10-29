@@ -37,9 +37,9 @@ Comando: `cargo run --release -- measure --n 100 --out results/box-2026-10-29.js
 
 | Métrica | Umbral | Box (Debian, kernel 6.12, bpf unprivileged disabled) | CI |
 |---|---|---|---|
-| TPR int3 (`0xCC`) | 100/100 | **100/100** | ver Actions |
-| TPR branch-only (`je`↔`jne`) | 100/100 | **100/100** | ver Actions |
-| FPR clean | 0/100 | **0/100** | ver Actions |
+| TPR int3 (`0xCC`) | 100/100 | **100/100** | **100/100** ([ci 40929603851](https://github.com/federiconbaez/cortex9-anti-uprobe-guard/actions/runs/40929603851)) |
+| TPR branch-only (`je`↔`jne`) | 100/100 | **100/100** | **100/100** |
+| FPR clean | 0/100 | **0/100** | **0/100** |
 
 Salida: [`results/box-2026-10-29.json`](results/box-2026-10-29.json).
 
@@ -53,7 +53,7 @@ del mundo real.
 
 - **Uprobe real del kernel:** job opcional [`enforce.yml`](.github/workflows/enforce.yml)
   con `sudo`. Si el runner no puede registrar el uprobe, el job queda rojo
-  (sin skip silencioso). No forma parte del criterio de aceptación userspace.
+  (sin skip silencioso). No forma parte del criterio de aceptación userspace. En ubuntu-24.04 de Actions el uprobe real **sí adjuntó** ([enforce 40929603700](https://github.com/federiconbaez/cortex9-anti-uprobe-guard/actions/runs/40929603700)).
 - `.text` de bibliotecas compartidas (libc, etc.): fuera de alcance.
 - Escape Quarkslab de VMA escribible (`valid_vma` rechaza `VM_WRITE` al registrar):
   no mitigado; un proceso que se haga el `.text` escribible evita el uprobe

@@ -1,0 +1,37 @@
+{
+  "prereg": "lab/prereg.json",
+  "n": 100,
+  "arms": [
+    {
+      "name": "clean",
+      "n": 100,
+      "detections": 0,
+      "false_alarms": 0,
+      "errors": []
+    },
+    {
+      "name": "int3",
+      "n": 100,
+      "detections": 100,
+      "false_alarms": 0,
+      "errors": []
+    },
+    {
+      "name": "branch_only",
+      "n": 100,
+      "detections": 100,
+      "false_alarms": 0,
+      "errors": []
+    }
+  ],
+  "thresholds": {
+    "tpr_int3": 1.0,
+    "tpr_branch_only": 1.0,
+    "fpr_clean": 0.0,
+    "tpr_int3_min": 1.0,
+    "tpr_branch_only_min": 1.0,
+    "fpr_clean_max": 0.0
+  },
+  "met": true,
+  "by_construction_caveat": "100% TPR / 0% FPR are on a synthetic corpus owned by the same author as the detector (clean / planted 0xCC / jne→je). Not a blind evaluation against real eBPF uprobes."
+}

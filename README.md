@@ -22,7 +22,8 @@ simulación en userspace (`mprotect` + escritura) porque esta box tiene
 
 ## Pre-registro
 
-Corpus y umbrales fijados **antes** de medir: [`lab/prereg.json`](lab/prereg.json).
+Corpus y umbrales fijados **antes** de medir: [`lab/prereg.json`](lab/prereg.json),
+commit `b84fc8b`, empujado a GitHub antes de la medición oficial.
 
 | Métrica | Umbral | n |
 |---|---|---|
@@ -32,17 +33,34 @@ Corpus y umbrales fijados **antes** de medir: [`lab/prereg.json`](lab/prereg.jso
 
 ## Resultados (medidos)
 
-*Pendiente: se completa en el commit posterior a este pre-registro.*
+Comando: `cargo run --release -- measure --n 100 --out results/box-2026-10-29.json`.
+
+| Métrica | Umbral | Box (Debian, kernel 6.12, bpf unprivileged disabled) | CI |
+|---|---|---|---|
+| TPR int3 (`0xCC`) | 100/100 | **100/100** | ver Actions |
+| TPR branch-only (`je`↔`jne`) | 100/100 | **100/100** | ver Actions |
+| FPR clean | 0/100 | **0/100** | ver Actions |
+
+Salida: [`results/box-2026-10-29.json`](results/box-2026-10-29.json).
+
+**Caveat "por construcción":** 100% TPR y 0% FPR son sobre un corpus sintético
+escrito por el mismo autor que el detector (tres brazos: clean / `0xCC` /
+flip de branch contra el canario propio). No es una evaluación ciega contra
+uprobes eBPF reales. El pre-registro fija ese corpus; no prueba cobertura
+del mundo real.
 
 ## Alcance / no verificado
 
-- Uprobe real del kernel: job opcional [`enforce.yml`](.github/workflows/enforce.yml)
-  con `sudo`; si el runner no puede registrar el uprobe, el job queda rojo
-  (sin skip silencioso).
+- **Uprobe real del kernel:** job opcional [`enforce.yml`](.github/workflows/enforce.yml)
+  con `sudo`. Si el runner no puede registrar el uprobe, el job queda rojo
+  (sin skip silencioso). No forma parte del criterio de aceptación userspace.
 - `.text` de bibliotecas compartidas (libc, etc.): fuera de alcance.
-- Escape Quarkslab de VMA escribible (`valid_vma` rechaza `VM_WRITE`): no mitigado.
-- Detección de mapeo `[uprobes]` (xol): no implementada.
+- Escape Quarkslab de VMA escribible (`valid_vma` rechaza `VM_WRITE` al registrar):
+  no mitigado; un proceso que se haga el `.text` escribible evita el uprobe
+  sin que este detector lo note como "uprobe", aunque sí vería otros writes.
+- Detección del mapeo `[uprobes]` (xol): no implementada.
 - Arquitecturas distintas de x86_64: no soportadas.
+- El canario bajo `opt-level=3` usa `je` (`0x74`); el plant acepta `je` o `jne`.
 
 ## Fuentes leídas
 

@@ -178,7 +178,7 @@ fn cmd_measure(n: usize, out: Option<PathBuf>) -> ExitCode {
         met,
         by_construction_caveat:
             "100% TPR / 0% FPR are on a synthetic corpus owned by the same author as the detector \
-             (clean / planted 0xCC / jne→je). Not a blind evaluation against real eBPF uprobes.",
+             (clean / planted 0xCC / je↔jne). Not a blind evaluation against real eBPF uprobes.",
     };
 
     let json = serde_json::to_string_pretty(&report).unwrap();
